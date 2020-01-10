@@ -1,0 +1,130 @@
+#define PIN_LED 13
+#define PIN_DIST_TRIG 23
+#define PIN_DIST_ECHO 22
+#define PIN_MOTOR1_EN 24
+#define PIN_MOTOR1_FWD 6
+#define PIN_MOTOR1_REV 7
+#define PIN_MOTOR2_EN 25
+#define PIN_MOTOR2_FWD 2
+#define PIN_MOTOR2_REV 3
+
+// 0 = Stop, 1 = Forward, 2 = Left, 3 = back, 4 = right.
+int direction = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PIN_DIST_TRIG, OUTPUT);
+  pinMode(PIN_DIST_ECHO, INPUT);
+  pinMode(PIN_LED, OUTPUT);
+  digitalWrite(PIN_LED, HIGH);
+}
+
+void loop() {
+  digitalWrite(PIN_DIST_TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PIN_DIST_TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(PIN_DIST_TRIG, LOW);
+  long duration = pulseIn(PIN_DIST_ECHO, HIGH);
+  long distance = (duration / 2) / 29.1;
+
+  // W = 119
+  // A = 91
+  // S = 115
+  // D = 100
+  int incomingByte = Serial.read();
+  Serial.println(incomingByte, DEC);
+  switch (incomingByte) {
+    case 119:
+      Serial.println("Forwards");
+      direction = 1;
+      break;
+    case 100:
+      Serial.println("Right");
+      direction = 2;
+      break;
+    case 115:
+      Serial.println("Back");
+      direction = 3;
+      break;
+    case 97:
+      Serial.println("Left");
+      direction = 4;
+      break;
+    case -1:
+      break;
+    default:
+      Serial.println("Stop");
+      direction = 0;
+      break;
+  }
+
+  if (distance > 10 || distance <= 0){
+    digitalWrite(PIN_LED, LOW);
+    switch (direction) {
+      case 1:
+        // Go forwards.
+        digitalWrite(PIN_MOTOR1_EN, HIGH);
+        analogWrite(PIN_MOTOR1_FWD, 255);
+        analogWrite(PIN_MOTOR1_REV, 0);
+        digitalWrite(PIN_MOTOR2_EN, HIGH);
+        analogWrite(PIN_MOTOR2_FWD, 255);
+        analogWrite(PIN_MOTOR2_REV, 0);
+        break;
+      case 2:
+        // Go right.
+        digitalWrite(PIN_MOTOR1_EN, HIGH);
+        analogWrite(PIN_MOTOR1_FWD, 255);
+        analogWrite(PIN_MOTOR1_REV, 0);
+        digitalWrite(PIN_MOTOR2_EN, HIGH);
+        analogWrite(PIN_MOTOR2_FWD, 0);
+        analogWrite(PIN_MOTOR2_REV, 255);
+        break;
+      case 3:
+        // Go back.
+        digitalWrite(PIN_MOTOR1_EN, HIGH);
+        analogWrite(PIN_MOTOR1_FWD, 0);
+        analogWrite(PIN_MOTOR1_REV, 255);
+        digitalWrite(PIN_MOTOR2_EN, HIGH);
+        analogWrite(PIN_MOTOR2_FWD, 0);
+        analogWrite(PIN_MOTOR2_REV, 255);
+        break;
+      case 4:
+        // Go left.
+        digitalWrite(PIN_MOTOR1_EN, HIGH);
+        analogWrite(PIN_MOTOR1_FWD, 0);
+        analogWrite(PIN_MOTOR1_REV, 255);
+        digitalWrite(PIN_MOTOR2_EN, HIGH);
+        analogWrite(PIN_MOTOR2_FWD, 255);
+        analogWrite(PIN_MOTOR2_REV, 0);
+        break;
+      default:
+        // Stop if anything else
+        digitalWrite(PIN_MOTOR1_EN, LOW);
+        analogWrite(PIN_MOTOR1_FWD, 0);
+        analogWrite(PIN_MOTOR1_REV, 0);
+        digitalWrite(PIN_MOTOR2_EN, LOW);
+        analogWrite(PIN_MOTOR2_FWD, 0);
+        analogWrite(PIN_MOTOR2_REV, 0);
+        break;
+    }
+  } else if(distance <= 5) {
+    // Backwards!
+    digitalWrite(PIN_LED, HIGH);
+    digitalWrite(PIN_MOTOR1_EN, HIGH);
+    analogWrite(PIN_MOTOR1_FWD, 0);
+    analogWrite(PIN_MOTOR1_REV, 255);
+    digitalWrite(PIN_MOTOR2_EN, HIGH);
+    analogWrite(PIN_MOTOR2_FWD, 0);
+    analogWrite(PIN_MOTOR2_REV, 255);
+  } else {
+    // Stop!
+    digitalWrite(PIN_LED, HIGH);
+    digitalWrite(PIN_MOTOR1_EN, LOW);
+    analogWrite(PIN_MOTOR1_FWD, 0);
+    analogWrite(PIN_MOTOR1_REV, 0);
+    digitalWrite(PIN_MOTOR2_EN, LOW);
+    analogWrite(PIN_MOTOR2_FWD, 0);
+    analogWrite(PIN_MOTOR2_REV, 0);
+  }
+}

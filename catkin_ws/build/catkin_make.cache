@@ -1,0 +1,2 @@
+robo_bot_pub
+-DCATKIN_DEVEL_PREFIX=/home/tim/robot/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/tim/robot/catkin_ws/install -G Unix Makefiles
