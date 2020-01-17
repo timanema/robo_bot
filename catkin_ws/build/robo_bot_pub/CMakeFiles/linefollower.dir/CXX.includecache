@@ -17,6 +17,12 @@ chrono
 -
 iostream
 -
+opencv2/opencv.hpp
+-
+cstdio
+-
+chrono
+-
 
 /opt/ros/melodic/include/geometry_msgs/Twist.h
 string

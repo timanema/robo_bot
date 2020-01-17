@@ -13,6 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
 )
 
+## OPENCV - START
+find_package(OpenCV REQUIRED)
+## OPENCV - END
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -118,6 +122,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -209,4 +214,4 @@ add_executable(test src/test.cpp)
 target_link_libraries(test ${catkin_LIBRARIES})
 
 add_executable(linefollower src/linefollower_11.cpp)
-target_link_libraries(linefollower ${catkin_LIBRARIES})
+target_link_libraries(linefollower ${catkin_LIBRARIES} ${OpenCV_LIBS})
