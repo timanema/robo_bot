@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <cv_bridge/cv_bridge.h>
 
 #include <thread>
 #include <chrono>
@@ -25,6 +26,8 @@ using namespace std;
 
 #define SELF_CORRECT true
 
+#define EROSION_SIZE 5
+
 float perform(const Mat *i) {
     Mat input = *i;
 
@@ -43,6 +46,10 @@ float perform(const Mat *i) {
 
     Mat gray;
     inRange(blur, Scalar(80,80,80), Scalar(255,255,255), gray);
+
+    Mat eroded;
+    Mat element = getStructuringElement(MORPH_ELLIPSE, Size(2 * EROSION_SIZE + 1, 2 * EROSION_SIZE + 1), Point(EROSION_SIZE, EROSION_SIZE));
+    erode(gray, eroded, element);
 
     Mat edge;
     Canny(gray, edge, 50, 100);
@@ -193,42 +200,15 @@ float perform(const Mat *i) {
     return angle;
 }
 
-int main(int argc, char **argv) {
-//  Mat image = imread(samples::findFile("../dataset/notslot/image0.jpg"));
+float prev_angle = 0.5f * (float) CV_PI;
+float degree = 90;
 
-    //VideoCapture cap("dataset/notslot/video2.mp4");
-
-    namedWindow("win", WINDOW_NORMAL);
-    resizeWindow("win", 480, 640);
-//    cv::VideoWriter output("out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS),
-//                           cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
-
-    float prev_angle = 0.5f * (float) CV_PI;
-
-
-   // ros - start
-
-   ros::init(argc, argv, "linefollower");
-
-   ros::NodeHandle nh;
-   ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-   geometry_msgs::Twist msg;
-
-   // ros - end
-
-
-   while (ros::ok()) {
-        VideoCapture cap("http://145.94.228.163:8080/video");
-
-        if (!cap.isOpened()) {
-            printf("Error opening video stream or file\n");
-            return -1;
-        }
-
+void ros_callback(const sensor_msgs::CompressedImageConstPtr& img) {
+        Mat raw = imdecode(Mat(img->data), 1);
         Mat frame;
-        cap >> frame;
 
-        if (frame.empty()) break;
+        rotate(raw, raw, ROTATE_90_CLOCKWISE);
+        resize(raw, frame, Size(480, 640), INTER_LINEAR);
 
         cv::Size size = frame.size();
         float halfWidth = size.width / 2;
@@ -239,7 +219,6 @@ int main(int argc, char **argv) {
 
         if (angle < -41) {
             angle = prev_angle;
-//            printf("aaaah");
             //TODO: Set counter somewhere to indicate that the robot is lost
         }
 
@@ -247,14 +226,35 @@ int main(int argc, char **argv) {
         Point pt2 = Point(halfWidth + halfWidth * cos(angle), size.height - halfWidth * sin(angle));
         line(frame, pt1, pt2, Scalar(0, 255, 0), 10, LINE_AA);
 
-        float degree = angle * 180.f / (float) CV_PI;
-//        printf("angle %f, time %fms, fps %f\n", degree, dur, fps);
-//        printf("%f degrees, %f%\n", degree, percentage);
+        degree = angle * 180.f / (float) CV_PI;
 
-        imshow("win", frame);
-//        output.write(frame);
+        imshow("PlebVision™", frame);
+}
+
+int main(int argc, char **argv) {
+//  Mat image = imread(samples::findFile("../dataset/notslot/image0.jpg"));
+
+    //VideoCapture cap("dataset/notslot/video2.mp4");
+
+    namedWindow("PlebVision™", WINDOW_NORMAL);
+    resizeWindow("PlebVision™", 480, 640);
+//    cv::VideoWriter output("out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS),
+//                           cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
 
 
+   // ros - start
+
+   ros::init(argc, argv, "linefollower");
+
+   ros::NodeHandle nh;
+   ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+   ros::Subscriber sub = nh.subscribe<sensor_msgs::CompressedImage>("camera/image/compressed", 1, ros_callback);
+   geometry_msgs::Twist msg;
+
+   // ros - end
+
+
+   while (ros::ok()) {
         // ros - start
         msg.angular.x = degree;
 
@@ -262,7 +262,6 @@ int main(int argc, char **argv) {
         ros::spinOnce();
         // ros - end
 
-        prev_angle = angle;
         if ((char) waitKey(25) == 27) break;
     }
 

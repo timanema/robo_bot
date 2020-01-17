@@ -157,6 +157,51 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
+robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_py.dir/rule:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_py.dir/rule
+.PHONY : robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_py.dir/rule
+
+# Convenience name for target.
+sensor_msgs_generate_messages_py: robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_py.dir/rule
+
+.PHONY : sensor_msgs_generate_messages_py
+
+# fast build rule for target.
+sensor_msgs_generate_messages_py/fast:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_py.dir/build.make robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_py.dir/build
+.PHONY : sensor_msgs_generate_messages_py/fast
+
+# Convenience name for target.
+robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/rule:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/rule
+.PHONY : robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/rule
+
+# Convenience name for target.
+sensor_msgs_generate_messages_nodejs: robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/rule
+
+.PHONY : sensor_msgs_generate_messages_nodejs
+
+# fast build rule for target.
+sensor_msgs_generate_messages_nodejs/fast:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/build.make robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/build
+.PHONY : sensor_msgs_generate_messages_nodejs/fast
+
+# Convenience name for target.
+robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_lisp.dir/rule:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_lisp.dir/rule
+.PHONY : robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_lisp.dir/rule
+
+# Convenience name for target.
+sensor_msgs_generate_messages_lisp: robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_lisp.dir/rule
+
+.PHONY : sensor_msgs_generate_messages_lisp
+
+# fast build rule for target.
+sensor_msgs_generate_messages_lisp/fast:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_lisp.dir/build.make robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_lisp.dir/build
+.PHONY : sensor_msgs_generate_messages_lisp/fast
+
+# Convenience name for target.
 robo_bot_pub/CMakeFiles/geometry_msgs_generate_messages_py.dir/rule:
 	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 robo_bot_pub/CMakeFiles/geometry_msgs_generate_messages_py.dir/rule
 .PHONY : robo_bot_pub/CMakeFiles/geometry_msgs_generate_messages_py.dir/rule
@@ -305,6 +350,36 @@ rosgraph_msgs_generate_messages_cpp: robo_bot_pub/CMakeFiles/rosgraph_msgs_gener
 rosgraph_msgs_generate_messages_cpp/fast:
 	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f robo_bot_pub/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/build.make robo_bot_pub/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/build
 .PHONY : rosgraph_msgs_generate_messages_cpp/fast
+
+# Convenience name for target.
+robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_eus.dir/rule:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_eus.dir/rule
+.PHONY : robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_eus.dir/rule
+
+# Convenience name for target.
+sensor_msgs_generate_messages_eus: robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_eus.dir/rule
+
+.PHONY : sensor_msgs_generate_messages_eus
+
+# fast build rule for target.
+sensor_msgs_generate_messages_eus/fast:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_eus.dir/build.make robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_eus.dir/build
+.PHONY : sensor_msgs_generate_messages_eus/fast
+
+# Convenience name for target.
+robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_cpp.dir/rule:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_cpp.dir/rule
+.PHONY : robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_cpp.dir/rule
+
+# Convenience name for target.
+sensor_msgs_generate_messages_cpp: robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_cpp.dir/rule
+
+.PHONY : sensor_msgs_generate_messages_cpp
+
+# fast build rule for target.
+sensor_msgs_generate_messages_cpp/fast:
+	cd /home/tim/robot/catkin_ws/build && $(MAKE) -f robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_cpp.dir/build.make robo_bot_pub/CMakeFiles/sensor_msgs_generate_messages_cpp.dir/build
+.PHONY : sensor_msgs_generate_messages_cpp/fast
 
 # Convenience name for target.
 robo_bot_pub/CMakeFiles/std_msgs_generate_messages_lisp.dir/rule:
@@ -548,7 +623,10 @@ help:
 	@echo "... depend"
 	@echo "... install/strip"
 	@echo "... install/local"
+	@echo "... sensor_msgs_generate_messages_py"
+	@echo "... sensor_msgs_generate_messages_nodejs"
 	@echo "... rebuild_cache"
+	@echo "... sensor_msgs_generate_messages_lisp"
 	@echo "... geometry_msgs_generate_messages_py"
 	@echo "... test"
 	@echo "... geometry_msgs_generate_messages_lisp"
@@ -561,6 +639,8 @@ help:
 	@echo "... geometry_msgs_generate_messages_nodejs"
 	@echo "... roscpp_generate_messages_lisp"
 	@echo "... rosgraph_msgs_generate_messages_cpp"
+	@echo "... sensor_msgs_generate_messages_eus"
+	@echo "... sensor_msgs_generate_messages_cpp"
 	@echo "... std_msgs_generate_messages_lisp"
 	@echo "... roscpp_generate_messages_cpp"
 	@echo "... geometry_msgs_generate_messages_cpp"

@@ -3,6 +3,7 @@
 
 robo_bot_pub/CMakeFiles/linefollower.dir/src/linefollower_11.cpp.o
  /home/tim/robot/catkin_ws/src/robo_bot_pub/src/linefollower_11.cpp
+ /opt/ros/melodic/include/cv_bridge/cv_bridge.h
  /opt/ros/melodic/include/geometry_msgs/Twist.h
  /opt/ros/melodic/include/geometry_msgs/Vector3.h
  /opt/ros/melodic/include/ros/advertise_options.h
@@ -61,5 +62,9 @@ robo_bot_pub/CMakeFiles/linefollower.dir/src/linefollower_11.cpp.o
  /opt/ros/melodic/include/ros/wall_timer.h
  /opt/ros/melodic/include/ros/wall_timer_options.h
  /opt/ros/melodic/include/rosconsole/macros_generated.h
+ /opt/ros/melodic/include/sensor_msgs/CompressedImage.h
+ /opt/ros/melodic/include/sensor_msgs/Image.h
+ /opt/ros/melodic/include/sensor_msgs/image_encodings.h
+ /opt/ros/melodic/include/std_msgs/Header.h
  /opt/ros/melodic/include/xmlrpcpp/XmlRpcDecl.h
  /opt/ros/melodic/include/xmlrpcpp/XmlRpcValue.h
