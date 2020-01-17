@@ -15,10 +15,10 @@ using namespace std;
 #define VERT_DIF 25
 #define VERT_CUT 2
 #define BIAS_START 1
-#define BIAS_ANGLE 25
+#define BIAS_ANGLE 30
 #define BIAS_CUT 5
 #define BOUND_CUT 0
-#define BOUND_ANGLE 50
+#define BOUND_ANGLE 58
 
 #define BIAS_LEN 0.1
 #define BOUND_LEN 0.25
@@ -33,7 +33,7 @@ float perform(const Mat *i) {
 
     cv::Rect roi;
     roi.x = 0;
-    roi.y = input.size().height * 0.5;
+    roi.y = input.size().height * 0.75;
     roi.width = input.size().width;
     roi.height = input.size().height * 0.25;
 
@@ -52,7 +52,7 @@ float perform(const Mat *i) {
     erode(gray, eroded, element);
 
     Mat edge;
-    Canny(gray, edge, 50, 100);
+    Canny(eroded, edge, 50, 100);
 
     vector<Vec4i> lines;
     HoughLinesP(edge, lines, 1, CV_PI / 180, 50, 30, 5);
