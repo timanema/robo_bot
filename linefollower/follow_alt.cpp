@@ -17,6 +17,8 @@ using namespace std;
 #define BOUND_LEN 0.25
 #define ANGLE_OVERRIDE 40
 
+#define SELF_CORRECT true
+
 float perform(const Mat *i) {
     Mat input = *i;
 
@@ -119,60 +121,62 @@ float perform(const Mat *i) {
     float biasDegree = bias < -BIAS_START ? BIAS_ANGLE : bias > BIAS_START ? -BIAS_ANGLE : 0;
     float sum = verSum + (includeHor ? horSum : 0);
     int cnt = verCnt + (includeHor ? horCnt : 0);
-    float angle = sum / cnt + (biasDegree * CV_PI / 180.f);
+    float angle = sum / cnt + (SELF_CORRECT ? (biasDegree * CV_PI / 180.f) : 0);
 //    printf("Bias %d, hor %d, ", bias, includeHor);
 
     float  minAngle = 0;
     float  maxAngle = CV_PI;
 
-    if (bias < -BIAS_CUT) {
-        minAngle = 0.5 * CV_PI;
-    }
-
-    if (bias > BIAS_CUT) {
-        maxAngle = 0.5 * CV_PI;
-    }
-
-    angle = min(max(minAngle, angle), maxAngle);
-
-    float forceLeft = min(max(minAngle, (90.f + BOUND_ANGLE) * (float) CV_PI / 180.f), maxAngle);
-    float forceRight = min(max(minAngle,  (90.f - BOUND_ANGLE) * (float) CV_PI / 180.f), maxAngle);
-    float forceStraight = min(max(minAngle, (90.f + biasDegree) * (float) CV_PI / 180.f), maxAngle);
-
-    if ((angle > forceLeft + ANGLE_OVERRIDE || angle < forceRight - ANGLE_OVERRIDE) && sum > 0) {
-        return angle;
-    }
-
-    if (leftBoundCntVer > BOUND_CUT) {
-        if (leftBoundCntVer >= verCnt) {
-            return forceLeft;
+    if (SELF_CORRECT) {
+        if (bias < -BIAS_CUT) {
+            minAngle = 0.5 * CV_PI;
         }
 
-        return forceStraight;
-    }
-
-    if (rightBoundCntVer > BOUND_CUT) {
-        if (leftBoundCntVer >= verCnt) {
-            return forceRight;
+        if (bias > BIAS_CUT) {
+            maxAngle = 0.5 * CV_PI;
         }
 
-        return forceStraight;
-    }
+        angle = min(max(minAngle, angle), maxAngle);
 
-    if (leftBoundCntHor > BOUND_CUT && includeHor) {
-        if (leftBoundCntHor >= horCnt) {
-            return forceLeft;
+        float forceLeft = min(max(minAngle, (90.f + BOUND_ANGLE) * (float) CV_PI / 180.f), maxAngle);
+        float forceRight = min(max(minAngle,  (90.f - BOUND_ANGLE) * (float) CV_PI / 180.f), maxAngle);
+        float forceStraight = min(max(minAngle, (90.f + biasDegree) * (float) CV_PI / 180.f), maxAngle);
+
+        if ((angle > forceLeft + ANGLE_OVERRIDE || angle < forceRight - ANGLE_OVERRIDE) && sum > 0) {
+            return angle;
         }
 
-        return forceStraight;
-    }
+        if (leftBoundCntVer > BOUND_CUT) {
+            if (leftBoundCntVer >= verCnt) {
+                return forceLeft;
+            }
 
-    if (rightBoundCntHor > BOUND_CUT && includeHor) {
-        if (leftBoundCntVer >= horCnt) {
-            return forceRight;
+            return forceStraight;
         }
 
-        return forceStraight;
+        if (rightBoundCntVer > BOUND_CUT) {
+            if (leftBoundCntVer >= verCnt) {
+                return forceRight;
+            }
+
+            return forceStraight;
+        }
+
+        if (leftBoundCntHor > BOUND_CUT && includeHor) {
+            if (leftBoundCntHor >= horCnt) {
+                return forceLeft;
+            }
+
+            return forceStraight;
+        }
+
+        if (rightBoundCntHor > BOUND_CUT && includeHor) {
+            if (leftBoundCntVer >= horCnt) {
+                return forceRight;
+            }
+
+            return forceStraight;
+        }
     }
 
     // signal no line found
@@ -186,25 +190,25 @@ float perform(const Mat *i) {
 int main(int argc, const char **argv) {
 //  Mat image = imread(samples::findFile("../dataset/notslot/image0.jpg"));
 
-    VideoCapture cap("dataset/notslot/video2.mp4");
-
-    if (!cap.isOpened()) {
-        printf("Error opening video stream or file\n");
-        return -1;
-    }
+    //VideoCapture cap("dataset/notslot/video2.mp4");
 
     namedWindow("win", WINDOW_NORMAL);
 
-    int frameCount = 0;
-    cv::VideoWriter output("out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS),
-                           cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
+//    cv::VideoWriter output("out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS),
+//                           cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
 
     float prev_angle = 0.5f * (float) CV_PI;
 
     while (true) {
+        VideoCapture cap("http://145.94.228.163:8080/video");
+
+        if (!cap.isOpened()) {
+            printf("Error opening video stream or file\n");
+            return -1;
+        }
+
         Mat frame;
         cap >> frame;
-        frameCount++;
 
         if (frame.empty()) break;
 
@@ -226,18 +230,17 @@ int main(int argc, const char **argv) {
         line(frame, pt1, pt2, Scalar(0, 255, 0), 10, LINE_AA);
 
         float degree = angle * 180.f / (float) CV_PI;
-        float percentage = cap.get(CAP_PROP_FRAME_COUNT) / frameCount;
 //        printf("angle %f, time %fms, fps %f\n", degree, dur, fps);
 //        printf("%f degrees, %f%\n", degree, percentage);
 
         imshow("win", frame);
-        output.write(frame);
+//        output.write(frame);
 
         prev_angle = angle;
         if ((char) waitKey(25) == 27) break;
     }
 
-    cap.release();
+//    cap.release();
     destroyAllWindows();
 
     return 0;

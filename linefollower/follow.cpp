@@ -63,7 +63,7 @@ float perform(const Mat *input) {
 int main(int argc, const char** argv) {
 //  Mat image = imread(samples::findFile("../dataset/notslot/image0.jpg"));
 
-  VideoCapture cap("../dataset/notslot/video0.mp4");
+  VideoCapture cap("dataset/notslot/video0.mp4");
 
   if(!cap.isOpened()){
     printf("Error opening video stream or file\n");
@@ -73,7 +73,7 @@ int main(int argc, const char** argv) {
   namedWindow("win", WINDOW_NORMAL);
 
   int frameCount = 0;
-  cv::VideoWriter output("../out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS), cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
+  cv::VideoWriter output("out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS), cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
 
   while(true){
     Mat frame;

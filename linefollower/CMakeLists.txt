@@ -7,5 +7,6 @@ find_package(OpenCV REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_executable(yeet ./follow.cpp)
+#add_executable(yeet ./follow.cpp)
+add_executable(yeet ./follow_alt.cpp)
 target_link_libraries(yeet ${OpenCV_LIBS})
