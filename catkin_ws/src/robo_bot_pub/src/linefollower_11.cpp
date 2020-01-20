@@ -232,6 +232,8 @@ void ros_callback(const sensor_msgs::CompressedImageConstPtr& img) {
         line(frame, pt1, pt2, Scalar(0, 255, 0), 10, LINE_AA);
 
         degree = angle * 180.f / (float) CV_PI;
+        degree = 1.f - 2.f * (degree / 180.f);
+
         imshow("PlebVision™", frame);
 }
 

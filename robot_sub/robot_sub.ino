@@ -12,14 +12,16 @@
 #define PIN_MOTOR2_FWD 2
 #define PIN_MOTOR2_REV 3
 
-int direction = -42;
+int direction = 90;
 float speed = 0.0;
 int noInput = 0;
+boolean stop = true;
 
 void handle( const geometry_msgs::Twist& msg){
-  direction = int(msg.angular.z);
+  direction = 180.0 * ((msg.angular.z - 1.0) / (-2.0));
   speed = msg.linear.x;
   noInput = 0;
+  stop = false;
 }
 
 ros::NodeHandle nh;
@@ -43,7 +45,7 @@ void loop()
   delay(1);
   
   if (noInput >= 50) {
-    direction = -42;
+    stop = true;
   }
   
   digitalWrite(PIN_DIST_TRIG, LOW);
@@ -55,7 +57,7 @@ void loop()
   digitalWrite(PIN_MOTOR1_EN, HIGH);
   digitalWrite(PIN_MOTOR2_EN, HIGH);
 
-  if (distance > 10 || distance <= 0){   
+  if (!stop && (distance > 10 || distance <= 0)){   
     analogWrite(PIN_MOTOR1_REV, 0);
     analogWrite(PIN_MOTOR2_REV, 0);
 
@@ -82,12 +84,12 @@ void loop()
     analogWrite(PIN_MOTOR1_FWD, int(left));
     analogWrite(PIN_MOTOR2_FWD, int(right));
     
-//  } else if(distance <= 5) {
- //   // Backwards!
-//    analogWrite(PIN_MOTOR1_FWD, 0);
-//    analogWrite(PIN_MOTOR1_REV, 255);
-//    analogWrite(PIN_MOTOR2_FWD, 0);
-//    analogWrite(PIN_MOTOR2_REV, 255);
+  } else if(!stop && distance <= 5) {
+    // Backwards!
+    analogWrite(PIN_MOTOR1_FWD, 0);
+    analogWrite(PIN_MOTOR1_REV, 255);
+    analogWrite(PIN_MOTOR2_FWD, 0);
+    analogWrite(PIN_MOTOR2_REV, 255);
   } else {
     // Stop!
     digitalWrite(PIN_MOTOR1_EN, LOW);
