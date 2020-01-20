@@ -201,7 +201,8 @@ float perform(const Mat *i) {
 }
 
 float prev_angle = 0.5f * (float) CV_PI;
-float degree = 90;
+float x_vec = 0;
+float y_vec = 1;
 
 void ros_callback(const sensor_msgs::CompressedImageConstPtr& img) {
         Mat raw = imdecode(Mat(img->data), 1);
@@ -226,7 +227,10 @@ void ros_callback(const sensor_msgs::CompressedImageConstPtr& img) {
         Point pt2 = Point(halfWidth + halfWidth * cos(angle), size.height - halfWidth * sin(angle));
         line(frame, pt1, pt2, Scalar(0, 255, 0), 10, LINE_AA);
 
-        degree = angle * 180.f / (float) CV_PI;
+        //degree = angle * 180.f / (float) CV_PI;
+
+        x_vec = cos(angle);
+        y_dev = sin(angle);
 
         imshow("PlebVision™", frame);
 }
@@ -256,7 +260,10 @@ int main(int argc, char **argv) {
 
    while (ros::ok()) {
         // ros - start
-        msg.angular.x = degree;
+        //msg.angular.x = degree;
+        msg.angular.x = x_vec;
+        msg.angular.y = y_vec;
+        msg.linear.x = 0.3; // fixed speed of 0.3
 
         pub.publish(msg);
         ros::spinOnce();

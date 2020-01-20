@@ -1,5 +1,6 @@
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
+#include <math.h>
 
 #define PIN_LED 13
 #define PIN_DIST_TRIG 23  
@@ -12,10 +13,12 @@
 #define PIN_MOTOR2_REV 3
 
 int direction = -42;
+float speed = 0.0;
 int noInput = 0;
 
 void handle( const geometry_msgs::Twist& msg){
-  direction = int(msg.angular.x);
+  direction = int(atan2(msg.angular.y, msg.angular.x));
+  speed = msg.linear.x;
   noInput = 0;
 }
 
@@ -75,8 +78,8 @@ void loop()
       right = 255;
     }
     
-    left *= 0.3;
-    right *= 0.3;
+    left *= speed;
+    right *= speed;
     
     analogWrite(PIN_MOTOR1_FWD, int(left));
     analogWrite(PIN_MOTOR2_FWD, int(right));
