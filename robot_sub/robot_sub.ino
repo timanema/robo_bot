@@ -12,7 +12,8 @@
 #define PIN_MOTOR2_FWD 2
 #define PIN_MOTOR2_REV 3
 
-int direction = -42;
+boolean stop = true;
+int direction = 90;
 float speed = 0.0;
 int noInput = 0;
 uint8_t motor1Forwards = 0;
@@ -35,10 +36,11 @@ ISR(TIMER4_OVF_vect) {
   }
 }
 
-void handle(const geometry_msgs::Twist& msg){
-  direction = int(msg.angular.z);
+void handle( const geometry_msgs::Twist& msg){
+  direction = 180.0 * ((msg.angular.z - 1.0) / (-2.0));
   speed = msg.linear.x;
   noInput = 0;
+  stop = false;
 }
 
 ros::NodeHandle nh;
@@ -75,7 +77,7 @@ void loop() {
   nh.spinOnce();
   
   if (noInput >= 50) {
-    direction = -42;
+    stop = true;
   }
   
   cli();
@@ -89,7 +91,7 @@ void loop() {
   digitalWrite(PIN_MOTOR1_EN, HIGH);
   digitalWrite(PIN_MOTOR2_EN, HIGH);
 
-  if (distance > 10 || distance <= 0){
+  if (!stop && (distance > 10 || distance <= 0)) {
     motor1Backwards = 0;
     motor2Backwards = 0;
 
@@ -118,7 +120,7 @@ void loop() {
     motor1Backwards = 0;
     motor2Backwards = 0;
     digitalWrite(PIN_LED, LOW);
-  } else if(distance <= 5) {
+  } else if(!stop && distance <= 5) {
     // Backwards!
     motor1Forwards = 0;
     motor2Forwards = 0;
