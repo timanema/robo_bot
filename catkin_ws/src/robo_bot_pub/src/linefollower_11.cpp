@@ -12,30 +12,35 @@
 using namespace cv;
 using namespace std;
 
-#define VERT_DIF 25
+#define HOR_DIF 35
 #define VERT_CUT 2
 #define BIAS_START 1
 #define BIAS_ANGLE 30
-#define BIAS_CUT 5
+#define BIAS_CUT 4
 #define BOUND_CUT 0
 #define BOUND_ANGLE 58
 
 #define BIAS_LEN 0.1
 #define BOUND_LEN 0.25
-#define ANGLE_OVERRIDE 40
+#define ANGLE_OVERRIDE 30
 
 #define SELF_CORRECT true
 
 #define EROSION_SIZE 5
 
+#define ROI_Y_START 0.8
+#define ROI_Y_SIZE 0.2
+#define ROI_X_START 0
+#define ROI_X_SIZE 1
+
 float perform(const Mat *i) {
     Mat input = *i;
 
     cv::Rect roi;
-    roi.x = 0;
-    roi.y = input.size().height * 0.75;
-    roi.width = input.size().width;
-    roi.height = input.size().height * 0.25;
+    roi.x = input.size().width * ROI_X_START;
+    roi.y = input.size().height * ROI_Y_START;
+    roi.width = input.size().width * ROI_X_SIZE;
+    roi.height = input.size().height * ROI_Y_SIZE;
 
     int leftBound = input.size().width * (0.5 - BOUND_LEN);
     int rightBound = input.size().width * (0.5 + BOUND_LEN);
@@ -71,7 +76,7 @@ float perform(const Mat *i) {
 
     for (auto l : lines) {
         // check if hor
-        bool hor = abs(l[0] - l[2]) > VERT_DIF;
+        bool hor = abs(l[0] - l[2]) > HOR_DIF;
         bool outOfLeft = l[0] < leftBound || l[2] < leftBound;
         bool outOfRight = l[0] > rightBound || l[2] > rightBound;
 
@@ -201,8 +206,7 @@ float perform(const Mat *i) {
 }
 
 float prev_angle = 0.5f * (float) CV_PI;
-float x_vec = 0;
-float y_vec = 1;
+float degree = 90;
 
 void ros_callback(const sensor_msgs::CompressedImageConstPtr& img) {
         Mat raw = imdecode(Mat(img->data), 1);
@@ -227,11 +231,7 @@ void ros_callback(const sensor_msgs::CompressedImageConstPtr& img) {
         Point pt2 = Point(halfWidth + halfWidth * cos(angle), size.height - halfWidth * sin(angle));
         line(frame, pt1, pt2, Scalar(0, 255, 0), 10, LINE_AA);
 
-        //degree = angle * 180.f / (float) CV_PI;
-
-        x_vec = cos(angle);
-        y_dev = sin(angle);
-
+        degree = angle * 180.f / (float) CV_PI;
         imshow("PlebVision™", frame);
 }
 
@@ -260,9 +260,7 @@ int main(int argc, char **argv) {
 
    while (ros::ok()) {
         // ros - start
-        //msg.angular.x = degree;
-        msg.angular.x = x_vec;
-        msg.angular.y = y_vec;
+        msg.angular.z = degree;
         msg.linear.x = 0.3; // fixed speed of 0.3
 
         pub.publish(msg);

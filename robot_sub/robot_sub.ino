@@ -17,7 +17,7 @@ float speed = 0.0;
 int noInput = 0;
 
 void handle( const geometry_msgs::Twist& msg){
-  direction = int(atan2(msg.angular.y, msg.angular.x));
+  direction = int(msg.angular.z);
   speed = msg.linear.x;
   noInput = 0;
 }
@@ -40,16 +40,14 @@ void loop()
 {  
   noInput += 1;
   nh.spinOnce();
-  delay(10);
+  delay(1);
   
   if (noInput >= 50) {
     direction = -42;
   }
   
   digitalWrite(PIN_DIST_TRIG, LOW);
-  delayMicroseconds(2);
   digitalWrite(PIN_DIST_TRIG, HIGH);
-  delayMicroseconds(10);
   digitalWrite(PIN_DIST_TRIG, LOW);
   long duration = pulseIn(PIN_DIST_ECHO, HIGH);
   long distance = (duration / 2) / 29.1;
@@ -84,12 +82,12 @@ void loop()
     analogWrite(PIN_MOTOR1_FWD, int(left));
     analogWrite(PIN_MOTOR2_FWD, int(right));
     
-  } else if(distance <= 5) {
-    // Backwards!
-    analogWrite(PIN_MOTOR1_FWD, 0);
-    analogWrite(PIN_MOTOR1_REV, 255);
-    analogWrite(PIN_MOTOR2_FWD, 0);
-    analogWrite(PIN_MOTOR2_REV, 255);
+//  } else if(distance <= 5) {
+ //   // Backwards!
+//    analogWrite(PIN_MOTOR1_FWD, 0);
+//    analogWrite(PIN_MOTOR1_REV, 255);
+//    analogWrite(PIN_MOTOR2_FWD, 0);
+//    analogWrite(PIN_MOTOR2_REV, 255);
   } else {
     // Stop!
     digitalWrite(PIN_MOTOR1_EN, LOW);
