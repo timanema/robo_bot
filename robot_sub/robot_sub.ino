@@ -15,8 +15,27 @@
 int direction = -42;
 float speed = 0.0;
 int noInput = 0;
+uint8_t motor1Forwards = 0;
+uint8_t motor1Backwards = 0;
+uint8_t motor2Forwards = 0;
+uint8_t motor2Backwards = 0;
 
-void handle( const geometry_msgs::Twist& msg){
+ISR(TIMER4_OVF_vect) {
+  for(int i = 0; i < 255; i++) {
+    if(i < motor1Backwards) {
+      digitalWrite(PIN_MOTOR1_REV, HIGH);
+    } else {
+      digitalWrite(PIN_MOTOR1_REV, LOW);
+    }
+
+//    digitalWrite(PIN_MOTOR1_FWD, i < motor1Forwards ? HIGH : LOW);
+//    digitalWrite(PIN_MOTOR1_REV, i < motor1Backwards ? HIGH : LOW);
+//    digitalWrite(PIN_MOTOR2_FWD, i < motor2Forwards ? HIGH : LOW);
+    digitalWrite(PIN_MOTOR2_REV, i < motor2Backwards ? HIGH : LOW);
+  }
+}
+
+void handle(const geometry_msgs::Twist& msg){
   direction = int(msg.angular.z);
   speed = msg.linear.x;
   noInput = 0;
@@ -30,34 +49,49 @@ void setup()
   // Setup pins
   pinMode(PIN_DIST_TRIG, OUTPUT);
   pinMode(PIN_DIST_ECHO, INPUT);
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_MOTOR1_EN, OUTPUT);
+  pinMode(PIN_MOTOR1_FWD, OUTPUT);
+  pinMode(PIN_MOTOR1_REV, OUTPUT);
+  pinMode(PIN_MOTOR2_EN, OUTPUT);
+  pinMode(PIN_MOTOR2_FWD, OUTPUT);
+  pinMode(PIN_MOTOR2_REV, OUTPUT);
+
+  cli();
+  TCCR4A = 0;
+  TCCR4B = 0;
+  
+  TIMSK4 = (1 << TOIE4);
+  TCCR4B |= (1 << CS10);
+  sei();
 
   // Setup subscriber
   nh.initNode();
   nh.subscribe(sub);
 }
 
-void loop()
-{  
+void loop() {
   noInput += 1;
   nh.spinOnce();
-  delay(1);
   
   if (noInput >= 50) {
     direction = -42;
   }
   
+  cli();
   digitalWrite(PIN_DIST_TRIG, LOW);
   digitalWrite(PIN_DIST_TRIG, HIGH);
   digitalWrite(PIN_DIST_TRIG, LOW);
   long duration = pulseIn(PIN_DIST_ECHO, HIGH);
   long distance = (duration / 2) / 29.1;
+  sei();
 
   digitalWrite(PIN_MOTOR1_EN, HIGH);
   digitalWrite(PIN_MOTOR2_EN, HIGH);
 
-  if (distance > 10 || distance <= 0){   
-    analogWrite(PIN_MOTOR1_REV, 0);
-    analogWrite(PIN_MOTOR2_REV, 0);
+  if (distance > 10 || distance <= 0){
+    motor1Backwards = 0;
+    motor2Backwards = 0;
 
     float left = 0;
     float right = 0;
@@ -78,23 +112,27 @@ void loop()
     
     left *= speed;
     right *= speed;
-    
-    analogWrite(PIN_MOTOR1_FWD, int(left));
-    analogWrite(PIN_MOTOR2_FWD, int(right));
-    
-//  } else if(distance <= 5) {
- //   // Backwards!
-//    analogWrite(PIN_MOTOR1_FWD, 0);
-//    analogWrite(PIN_MOTOR1_REV, 255);
-//    analogWrite(PIN_MOTOR2_FWD, 0);
-//    analogWrite(PIN_MOTOR2_REV, 255);
+
+    motor1Forwards = int(left);
+    motor2Forwards = int(right);
+    motor1Backwards = 0;
+    motor2Backwards = 0;
+    digitalWrite(PIN_LED, LOW);
+  } else if(distance <= 5) {
+    // Backwards!
+    motor1Forwards = 0;
+    motor2Forwards = 0;
+    motor1Backwards = 255;
+    motor2Backwards = 255;
+    digitalWrite(PIN_LED, HIGH);
   } else {
     // Stop!
     digitalWrite(PIN_MOTOR1_EN, LOW);
     digitalWrite(PIN_MOTOR2_EN, LOW);
-    analogWrite(PIN_MOTOR1_FWD, 0);
-    analogWrite(PIN_MOTOR1_REV, 0);
-    analogWrite(PIN_MOTOR2_FWD, 0);
-    analogWrite(PIN_MOTOR2_REV, 0);
+    motor1Forwards = 0;
+    motor2Forwards = 0;
+    motor1Backwards = 0;
+    motor2Backwards = 0;
+    digitalWrite(PIN_LED, LOW);
   }
 }
