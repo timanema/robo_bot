@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <cstdio>
+#include <string>
 
 #define EROSION_SIZE 5
 #define EDGE_THRESH 1
@@ -13,9 +14,9 @@ float perform(const Mat *input) {
   cvtColor((*input), gray, COLOR_RGB2GRAY);
 
   cv::Rect roi;
-  roi.x = 0;
-  roi.y = gray.size().height * 0.5;
-  roi.width = gray.size().width;
+  roi.x = gray.size().width * 0.25;
+  roi.y = gray.size().height * 0.3;//0.7;
+  roi.width = gray.size().width * 0.5;
   roi.height = gray.size().height * 0.2;
 
   Mat thresh;
@@ -45,23 +46,44 @@ float perform(const Mat *input) {
   vector<Vec4i> lines;
   float sum = 0.f;
   HoughLinesP(blurImage, lines, 1, CV_PI /180, 200, 100, 50);
+  int cnt = 0;
 
   for(auto l : lines){
-    Point pt1 = Point(l[0], l[1]);
-    Point pt2 = Point(l[2], l[3]);
-    float angle = atan2(pt1.y - pt2.y, pt1.x - pt2.x);
-    sum += abs(angle);
+    if (abs(l[0] - l[2]) > 60) continue;
 
+    Point pt1;
+    Point pt2;
+
+    if (l[1] < l[3]) {
+      pt1 = Point(l[0], l[1]);
+      pt2 = Point(l[2], l[3]);
+    }
+    else {
+      pt1 = Point(l[2], l[3]);
+      pt2 = Point(l[0], l[1]);
+    }
+
+    //Point pt1 = Point(l[0], l[1]);
+    //Point pt2 = Point(l[2], l[3]);
+    float angle = -atan2(pt1.y - pt2.y, pt1.x - pt2.x);
+    sum += angle;
+    cnt += 1;
     line(rgb, pt1, pt2, Scalar(255, 0, 0), 3, LINE_AA);
   }
 
+  imshow("test", rgb);
+  waitKey(0);
 //  float angle = (sum / lines.size()) * 180.f / (float) CV_PI;
 
-  return sum / lines.size();
+  return sum / cnt;//lines.size();
 }
 
 int main(int argc, const char** argv) {
-//  Mat image = imread(samples::findFile("../dataset/notslot/image0.jpg"));
+  string path = "../dataset/notslot/video0.mp4";
+
+  if (argc == 2) {
+   path = argv[1];
+  }
 
   VideoCapture cap("dataset/notslot/video0.mp4");
 
@@ -71,6 +93,7 @@ int main(int argc, const char** argv) {
   }
 
   namedWindow("win", WINDOW_NORMAL);
+  resizeWindow("win", 500, 500);
 
   int frameCount = 0;
   cv::VideoWriter output("out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS), cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
