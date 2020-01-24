@@ -13,7 +13,7 @@
 #define PIN_MOTOR2_FWD 2
 #define PIN_MOTOR2_REV 3
 
-int direction = -42;
+int direction = 90;
 float speed = 0.0;
 int noInput = 0;
 bool stop = true;
@@ -23,6 +23,10 @@ void handle(const geometry_msgs::Twist& msg){
   speed = msg.linear.x;
   noInput = 0;
   stop = false;
+  
+  if (speed > 1.0) {
+    speed = 1.0;
+  }
 }
 
 ros::NodeHandle nh;
@@ -79,7 +83,7 @@ void loop() {
 
   nh.spinOnce();
   
-  if (noInput >= 50) {
+  if (noInput >= 100) {
     stop = true;
   }
 
@@ -88,13 +92,14 @@ void loop() {
   digitalWrite(PIN_DIST_TRIG, LOW);
   long duration = pulseIn(PIN_DIST_ECHO, HIGH);
   long distance = (duration / 2) / 29.1;
-
-  digitalWrite(PIN_MOTOR1_EN, HIGH);
-  digitalWrite(PIN_MOTOR2_EN, HIGH);
-
-  if (!stop && (distance > 20 || distance <= 0)) {
+  
+  if (!stop && (distance > 10)) {
+    digitalWrite(PIN_LED, HIGH);
+    digitalWrite(PIN_MOTOR1_EN, HIGH);
+    digitalWrite(PIN_MOTOR2_EN, HIGH);
     float left = 0;
     float right = 0;
+    float modifier = 1.0;
     
     if (direction < 0) {
       left = 0;
@@ -109,30 +114,31 @@ void loop() {
       left = 255;
       right = 255;
     }
+
+    if(distance <= 20) {
+      modifier = 0.5 + distance / 40;
+      
+      if(modifier > 1.0) {
+        modifier = 1.0;
+      }
+    }
     
     left *= speed;
     right *= speed;
+    left *= modifier;
+    right *= modifier;
 
     anal(PIN_MOTOR1_FWD, int(left));
-    anal(PIN_MOTOR2_FWD, int(left));
+    anal(PIN_MOTOR2_FWD, int(right));
     anal(PIN_MOTOR1_REV, 0);
     anal(PIN_MOTOR2_REV, 0);
-    digitalWrite(PIN_LED, LOW);
-  } else if(distance <= 10) {
-    // Backwards!
-    anal(PIN_MOTOR1_FWD, 0);
-    anal(PIN_MOTOR2_FWD, 0);
-    anal(PIN_MOTOR1_REV, 255);
-    anal(PIN_MOTOR2_REV, 255);
-    digitalWrite(PIN_LED, HIGH);
   } else {
-    // Stop!
+    digitalWrite(PIN_LED, LOW);
     digitalWrite(PIN_MOTOR1_EN, LOW);
     digitalWrite(PIN_MOTOR2_EN, LOW);
     anal(PIN_MOTOR1_FWD, 0);
     anal(PIN_MOTOR2_FWD, 0);
     anal(PIN_MOTOR1_REV, 0);
     anal(PIN_MOTOR2_REV, 0);
-    digitalWrite(PIN_LED, LOW);
   }
 }

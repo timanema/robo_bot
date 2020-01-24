@@ -21,28 +21,28 @@ using namespace std;
 #define HOR_DIF 35
 #define VERT_CUT 2
 #define BIAS_START 1
-#define BIAS_ANGLE 30
-#define BIAS_CUT 4
+#define BIAS_ANGLE 45
+#define BIAS_CUT 3
 #define BOUND_CUT 0
-#define BOUND_ANGLE 58
+#define BOUND_ANGLE 75
 
 #define BIAS_LEN 0.1
 #define BOUND_LEN 0.25
-#define ANGLE_OVERRIDE 30
+#define ANGLE_OVERRIDE 45
 
 #define SELF_CORRECT true
 
 #define EROSION_SIZE 5
 
-#define ROI_Y_START 0.8
-#define ROI_Y_SIZE 0.2
+#define ROI_Y_START 0.65
+#define ROI_Y_SIZE 0.25
 #define ROI_X_START 0
 #define ROI_X_SIZE 1
 
 // Algo select
-#define DANY 1
+#define TIM
 
-#ifdef DANY == 1
+#ifdef DANY
 float perform(const Mat *input) {
   Mat gray;
   cvtColor((*input), gray, COLOR_RGB2GRAY);
