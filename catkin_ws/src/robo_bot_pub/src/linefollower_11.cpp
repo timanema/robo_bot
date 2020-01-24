@@ -40,9 +40,9 @@ using namespace std;
 #define ROI_X_SIZE 1
 
 // Algo select
-#define TIM
+#define DANY 1
 
-#ifdef DANY
+#ifdef DANY == 1
 float perform(const Mat *input) {
   Mat gray;
   cvtColor((*input), gray, COLOR_RGB2GRAY);
