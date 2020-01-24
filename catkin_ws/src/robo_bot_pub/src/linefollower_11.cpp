@@ -24,7 +24,7 @@ using namespace std;
 #define BIAS_ANGLE 45
 #define BIAS_CUT 3
 #define BOUND_CUT 0
-#define BOUND_ANGLE 75
+#define BOUND_ANGLE 80
 
 #define BIAS_LEN 0.1
 #define BOUND_LEN 0.25
