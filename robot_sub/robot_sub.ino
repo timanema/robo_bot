@@ -1,6 +1,7 @@
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
 #include <math.h>
+#include "wiring_private.h"
 
 #define PIN_LED 13
 #define PIN_DIST_TRIG 23  
@@ -12,42 +13,20 @@
 #define PIN_MOTOR2_FWD 2
 #define PIN_MOTOR2_REV 3
 
-boolean stop = true;
-int direction = 90;
+int direction = -42;
 float speed = 0.0;
 int noInput = 0;
-uint8_t motor1Forwards = 0;
-uint8_t motor1Backwards = 0;
-uint8_t motor2Forwards = 0;
-uint8_t motor2Backwards = 0;
 
-ISR(TIMER4_OVF_vect) {
-  for(int i = 0; i < 255; i++) {
-    if(i < motor1Backwards) {
-      digitalWrite(PIN_MOTOR1_REV, HIGH);
-    } else {
-      digitalWrite(PIN_MOTOR1_REV, LOW);
-    }
-
-//    digitalWrite(PIN_MOTOR1_FWD, i < motor1Forwards ? HIGH : LOW);
-//    digitalWrite(PIN_MOTOR1_REV, i < motor1Backwards ? HIGH : LOW);
-//    digitalWrite(PIN_MOTOR2_FWD, i < motor2Forwards ? HIGH : LOW);
-    digitalWrite(PIN_MOTOR2_REV, i < motor2Backwards ? HIGH : LOW);
-  }
-}
-
-void handle( const geometry_msgs::Twist& msg){
-  direction = 180.0 * ((msg.angular.z - 1.0) / (-2.0));
+void handle(const geometry_msgs::Twist& msg){
+  direction = int(msg.angular.z);
   speed = msg.linear.x;
   noInput = 0;
-  stop = false;
 }
 
 ros::NodeHandle nh;
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", handle);
 
-void setup()
-{
+void setup() {
   // Setup pins
   pinMode(PIN_DIST_TRIG, OUTPUT);
   pinMode(PIN_DIST_ECHO, INPUT);
@@ -59,17 +38,40 @@ void setup()
   pinMode(PIN_MOTOR2_FWD, OUTPUT);
   pinMode(PIN_MOTOR2_REV, OUTPUT);
 
-  cli();
-  TCCR4A = 0;
-  TCCR4B = 0;
-  
-  TIMSK4 = (1 << TOIE4);
-  TCCR4B |= (1 << CS10);
-  sei();
-
   // Setup subscriber
   nh.initNode();
   nh.subscribe(sub);
+}
+
+
+
+void anal(uint8_t pin, int val) {
+  switch(digitalPinToTimer(pin)) {
+      // Right motor REV
+      case TIMER3C:
+        sbi(TCCR3A, COM3C1);
+        OCR3C = val;
+        break;
+
+      // Left motor REV
+      case TIMER4B:
+        sbi(TCCR4A, COM4B1);
+        OCR4B = val;
+        break;
+      
+      // right motor FWR
+      case TIMER3B:
+        sbi(TCCR3A, COM3B1);
+        OCR3B = val;
+        break;
+
+      // left motor FWR
+      case TIMER4A:
+        sbi(TCCR4A, COM4A1);
+        cbi(TCCR4A, COM4A0);
+        OCR4A = val;
+        break;
+    }
 }
 
 void loop() {
@@ -77,24 +79,19 @@ void loop() {
   nh.spinOnce();
   
   if (noInput >= 50) {
-    stop = true;
+    direction = -42;
   }
-  
-  cli();
+
   digitalWrite(PIN_DIST_TRIG, LOW);
   digitalWrite(PIN_DIST_TRIG, HIGH);
   digitalWrite(PIN_DIST_TRIG, LOW);
   long duration = pulseIn(PIN_DIST_ECHO, HIGH);
   long distance = (duration / 2) / 29.1;
-  sei();
 
   digitalWrite(PIN_MOTOR1_EN, HIGH);
   digitalWrite(PIN_MOTOR2_EN, HIGH);
 
-  if (!stop && (distance > 10 || distance <= 0)) {
-    motor1Backwards = 0;
-    motor2Backwards = 0;
-
+  if (distance > 20 || distance <= 0){
     float left = 0;
     float right = 0;
     
@@ -115,26 +112,30 @@ void loop() {
     left *= speed;
     right *= speed;
 
-    motor1Forwards = int(left);
-    motor2Forwards = int(right);
-    motor1Backwards = 0;
-    motor2Backwards = 0;
+    // TODO: remove
+    left = 100;
+    right = 100;
+
+    anal(PIN_MOTOR1_FWD, int(left));
+    anal(PIN_MOTOR2_FWD, int(left));
+    anal(PIN_MOTOR1_REV, 0);
+    anal(PIN_MOTOR2_REV, 0);
     digitalWrite(PIN_LED, LOW);
-  } else if(!stop && distance <= 5) {
+  } else if(distance <= 10) {
     // Backwards!
-    motor1Forwards = 0;
-    motor2Forwards = 0;
-    motor1Backwards = 255;
-    motor2Backwards = 255;
+    anal(PIN_MOTOR1_FWD, 0);
+    anal(PIN_MOTOR2_FWD, 0);
+    anal(PIN_MOTOR1_REV, 255);
+    anal(PIN_MOTOR2_REV, 255);
     digitalWrite(PIN_LED, HIGH);
   } else {
     // Stop!
     digitalWrite(PIN_MOTOR1_EN, LOW);
     digitalWrite(PIN_MOTOR2_EN, LOW);
-    motor1Forwards = 0;
-    motor2Forwards = 0;
-    motor1Backwards = 0;
-    motor2Backwards = 0;
+    anal(PIN_MOTOR1_FWD, 0);
+    anal(PIN_MOTOR2_FWD, 0);
+    anal(PIN_MOTOR1_REV, 0);
+    anal(PIN_MOTOR2_REV, 0);
     digitalWrite(PIN_LED, LOW);
   }
 }
