@@ -16,11 +16,13 @@
 int direction = -42;
 float speed = 0.0;
 int noInput = 0;
+bool stop = true;
 
 void handle(const geometry_msgs::Twist& msg){
-  direction = int(msg.angular.z);
+  direction = 180.0 * ((msg.angular.z + 1.0) / 2.0);
   speed = msg.linear.x;
   noInput = 0;
+  stop = false;
 }
 
 ros::NodeHandle nh;
@@ -42,8 +44,6 @@ void setup() {
   nh.initNode();
   nh.subscribe(sub);
 }
-
-
 
 void anal(uint8_t pin, int val) {
   switch(digitalPinToTimer(pin)) {
@@ -76,10 +76,11 @@ void anal(uint8_t pin, int val) {
 
 void loop() {
   noInput += 1;
+
   nh.spinOnce();
   
   if (noInput >= 50) {
-    direction = -42;
+    stop = true;
   }
 
   digitalWrite(PIN_DIST_TRIG, LOW);
@@ -91,7 +92,7 @@ void loop() {
   digitalWrite(PIN_MOTOR1_EN, HIGH);
   digitalWrite(PIN_MOTOR2_EN, HIGH);
 
-  if (distance > 20 || distance <= 0){
+  if (!stop && (distance > 20 || distance <= 0)) {
     float left = 0;
     float right = 0;
     
@@ -111,10 +112,6 @@ void loop() {
     
     left *= speed;
     right *= speed;
-
-    // TODO: remove
-    left = 100;
-    right = 100;
 
     anal(PIN_MOTOR1_FWD, int(left));
     anal(PIN_MOTOR2_FWD, int(left));
