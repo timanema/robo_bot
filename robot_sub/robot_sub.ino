@@ -27,6 +27,10 @@ void handle(const geometry_msgs::Twist& msg){
   if (speed > 1.0) {
     speed = 1.0;
   }
+  
+  if (speed < -1.0) {
+    speed = -1.0;
+  }
 }
 
 ros::NodeHandle nh;
@@ -93,7 +97,7 @@ void loop() {
   long duration = pulseIn(PIN_DIST_ECHO, HIGH);
   long distance = (duration / 2) / 29.1;
   
-  if (!stop && (distance > 10)) {
+  if (!stop && (distance > 5)) {
     digitalWrite(PIN_LED, HIGH);
     digitalWrite(PIN_MOTOR1_EN, HIGH);
     digitalWrite(PIN_MOTOR2_EN, HIGH);
@@ -115,8 +119,8 @@ void loop() {
       right = 255;
     }
 
-    if(distance <= 20) {
-      modifier = 0.5 + distance / 40;
+    if(distance <= 5) {
+      modifier = 0.5 + distance / 10;
       
       if(modifier > 1.0) {
         modifier = 1.0;
@@ -128,10 +132,18 @@ void loop() {
     left *= modifier;
     right *= modifier;
 
-    anal(PIN_MOTOR1_FWD, int(left));
-    anal(PIN_MOTOR2_FWD, int(right));
-    anal(PIN_MOTOR1_REV, 0);
-    anal(PIN_MOTOR2_REV, 0);
+    if (speed > 0.0) {
+      anal(PIN_MOTOR1_FWD, int(left));
+      anal(PIN_MOTOR2_FWD, int(right));
+      anal(PIN_MOTOR1_REV, 0);
+      anal(PIN_MOTOR2_REV, 0);
+    } else {
+      anal(PIN_MOTOR1_FWD, 0);
+      anal(PIN_MOTOR2_FWD, 0);
+      anal(PIN_MOTOR1_REV, int(right));
+      anal(PIN_MOTOR2_REV, int(left));
+    }
+
   } else {
     digitalWrite(PIN_LED, LOW);
     digitalWrite(PIN_MOTOR1_EN, LOW);
