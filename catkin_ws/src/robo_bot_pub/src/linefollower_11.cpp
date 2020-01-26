@@ -90,23 +90,24 @@ float perform(const Mat *input) {
     line(rgb, pt1, pt2, Scalar(255, 0, 0), 3, LINE_AA);
   }
 
-//  float angle = (sum / lines.size()) * 180.f / (float) CV_PI;
-
   return sum / lines.size();
 }
 #else
 float perform(const Mat *i) {
     Mat input = *i;
 
+    // Create ROI
     cv::Rect roi;
     roi.x = input.size().width * ROI_X_START;
     roi.y = input.size().height * ROI_Y_START;
     roi.width = input.size().width * ROI_X_SIZE;
     roi.height = input.size().height * ROI_Y_SIZE;
 
+    // Get bounds
     int leftBound = input.size().width * (0.5 - BOUND_LEN);
     int rightBound = input.size().width * (0.5 + BOUND_LEN);
 
+    // Do some image processing (blur -> threshold -> erode -> edge)
     Mat blur;
     medianBlur(input(roi), blur, 7);
     medianBlur(input(roi), blur, 7);
@@ -121,8 +122,11 @@ float perform(const Mat *i) {
     Mat edge;
     Canny(eroded, edge, 50, 100);
 
+    // Retrieve the lines
     vector<Vec4i> lines;
     HoughLinesP(edge, lines, 1, CV_PI / 180, 50, 30, 5);
+  
+    // Define all counters used
     float verSum = 0.f;
     float horSum = 0.f;
     int verCnt = 0;
@@ -136,12 +140,14 @@ float perform(const Mat *i) {
     float biasBorderMin = input.size().width * (0.5 - BIAS_LEN);
     float biasBorderMax = input.size().width * (0.5 + BIAS_LEN);
 
+    // For each detected line, we draw it and check its positition in order to increment the correct counters
     for (auto l : lines) {
         // check if hor
         bool hor = abs(l[0] - l[2]) > HOR_DIF;
         bool outOfLeft = l[0] < leftBound || l[2] < leftBound;
         bool outOfRight = l[0] > rightBound || l[2] > rightBound;
 
+        // Get the 'highest' point
         Point p1;
         Point p2;
 
@@ -153,10 +159,14 @@ float perform(const Mat *i) {
             p1 = Point(l[2], l[3]);
         }
 
+        // Calculate the angle
         float angle = -atan2(p1.y - p2.y, p1.x - p2.x);
+      
+        // Check if this line is more one one side on the screen than the other
         bool leftBias = l[0] < biasBorderMin || l[2] < biasBorderMin;
         bool rightBias = l[0] > biasBorderMax || l[2] > biasBorderMax;
 
+        // Increment correct counters, should be self-explanatory
         if (outOfLeft || outOfRight) {
             if (hor) {
                 leftBoundCntHor += outOfLeft ? 1 : 0;
@@ -182,10 +192,9 @@ float perform(const Mat *i) {
         }
 
         line(edge, p1, p2, Scalar(255, 255, 255), 3, LINE_AA);
-//        printf("Found line: %5.2f, %d\n", angle * 180.f / (float) CV_PI, hor);
     }
 
-    // draw bounds
+    // Draw bouds
     Point left_p1 = Point(input.size().width * (0.5 - BOUND_LEN), 0);
     Point left_p2 = Point(input.size().width * (0.5 - BOUND_LEN), input.size().height);
     Point right_p1 = Point(input.size().width * (0.5 + BOUND_LEN), 0);
@@ -193,21 +202,23 @@ float perform(const Mat *i) {
     line(edge, left_p1, left_p2, Scalar(255, 255, 255), 5, LINE_AA);
     line(edge, right_p1, right_p2, Scalar(255, 255, 255), 5, LINE_AA);
 
+    // Show the resulting image
     imshow("RoboVision™", edge);
-//    waitKey(0);
 
+    // Check if we should include horizontal lines, and if so include them
     bool includeHor = verCnt < VERT_CUT;
     int bias = verBias + (includeHor ? horBias : 0);
     float biasDegree = bias < -BIAS_START ? BIAS_ANGLE : bias > BIAS_START ? -BIAS_ANGLE : 0;
     float sum = verSum + (includeHor ? horSum : 0);
     int cnt = verCnt + (includeHor ? horCnt : 0);
     float angle = sum / cnt + (SELF_CORRECT ? (biasDegree * CV_PI / 180.f) : 0);
-//    printf("Bias %d, hor %d, ", bias, includeHor);
 
     float  minAngle = 0;
     float  maxAngle = CV_PI;
 
+    // Check if the robot should correct its course (which it basically always should except for some tests)
     if (SELF_CORRECT) {
+        // Check if we should cap the angle based on the line bias
         if (bias < -BIAS_CUT) {
             minAngle = 0.5 * CV_PI;
         }
@@ -216,16 +227,20 @@ float perform(const Mat *i) {
             maxAngle = 0.5 * CV_PI;
         }
 
+        // Cap the angle
         angle = min(max(minAngle, angle), maxAngle);
 
+        // Calculate the angles of the robot we return, if it should correct itself
         float forceLeft = min(max(minAngle, (90.f + BOUND_ANGLE) * (float) CV_PI / 180.f), maxAngle);
         float forceRight = min(max(minAngle,  (90.f - BOUND_ANGLE) * (float) CV_PI / 180.f), maxAngle);
         float forceStraight = min(max(minAngle, (90.f + biasDegree) * (float) CV_PI / 180.f), maxAngle);
 
+        // If the angle of the line is higher than our correction + some margin, just use the angle
         if ((angle > forceLeft + ANGLE_OVERRIDE || angle < forceRight - ANGLE_OVERRIDE) && sum > 0) {
             return angle;
         }
 
+        // Depending on how many lines are out of bounds and where we can force the robot to the left, right and straight
         if (leftBoundCntVer > BOUND_CUT) {
             if (leftBoundCntVer >= verCnt) {
                 return forceLeft;
@@ -259,58 +274,57 @@ float perform(const Mat *i) {
         }
     }
 
-    // signal no line found
+    // If there was no line we simply return a magic number
     if (sum <= 0) {
         return -42;
     }
 
+    // Nothing special, so just follow the line
     return angle;
 }
 #endif
 
 float prev_angle = 0.5f * (float) CV_PI;
 float degree = 90;
+int lost_count = 0;
 
 void ros_callback(const sensor_msgs::CompressedImageConstPtr& img) {
         Mat raw = imdecode(Mat(img->data), 1);
         Mat frame;
 
+        // Rotate and crop the received image from (in our case) 2K to 480p
         rotate(raw, raw, ROTATE_90_CLOCKWISE);
         resize(raw, frame, Size(480, 640), INTER_LINEAR);
 
         cv::Size size = frame.size();
         float halfWidth = size.width / 2;
-        auto start = chrono::high_resolution_clock::now();
         float angle = perform(&frame);
-        float dur = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count();
-        float fps = 1000.f / dur;
 
+        // If there were no lines, continue 
         if (angle < -41) {
             angle = prev_angle;
-            //TODO: Set counter somewhere to indicate that the robot is lost
+            lost_count += 1;
         }
 
+        // Draw the line the robot will follow
         Point pt1 = Point(halfWidth, size.height);
         Point pt2 = Point(halfWidth + halfWidth * cos(angle), size.height - halfWidth * sin(angle));
         line(frame, pt1, pt2, Scalar(0, 255, 0), 10, LINE_AA);
 
+        // Convert radian to degree
         degree = angle * 180.f / (float) CV_PI;
+  
+        // Convert to twist spec
         degree = -1.f + 2.f * (degree / 180.f);
-
+  
+        // Show result
         imshow("PlebVision™", frame);
 }
 
 int main(int argc, char **argv) {
-//  Mat image = imread(samples::findFile("../dataset/notslot/image0.jpg"));
-
-    //VideoCapture cap("dataset/notslot/video2.mp4");
-
-    namedWindow("PlebVision™", WINDOW_NORMAL);
-    resizeWindow("PlebVision™", 480, 640);
-//    cv::VideoWriter output("out.mp4", cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS),
-//                           cv::Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
-
-
+   namedWindow("PlebVision™", WINDOW_NORMAL);
+   resizeWindow("PlebVision™", 480, 640);
+   
    // ros - start
 
    ros::init(argc, argv, "linefollower");
@@ -322,12 +336,17 @@ int main(int argc, char **argv) {
 
    // ros - end
 
-
    while (ros::ok()) {
         // ros - start
         msg.angular.z = degree;
         msg.linear.x = 0.3; // fixed speed of 0.3
 
+        // If the robot hasn't seen a line for a while, set its speed to 0
+        // Our robot works at about 40fps (last time we checked), which means the robot will stop after about 2s of no line
+        if (lost_count > 100) {
+          msg.linear.x = 0.0;
+        }
+     
         pub.publish(msg);
         ros::spinOnce();
         // ros - end
