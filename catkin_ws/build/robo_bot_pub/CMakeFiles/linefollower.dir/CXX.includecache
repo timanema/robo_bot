@@ -13,17 +13,11 @@ geometry_msgs/Twist.h
 -
 cv_bridge/cv_bridge.h
 -
-thread
--
-chrono
--
 iostream
 -
 opencv2/opencv.hpp
 -
 cstdio
--
-chrono
 -
 
 /opt/ros/melodic/include/cv_bridge/cv_bridge.h

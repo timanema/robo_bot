@@ -107,7 +107,6 @@ float perform(const Mat *i) {
     // Do some image processing (blur -> threshold -> erode -> edge)
     Mat blur;
     medianBlur(input(roi), blur, 7);
-    medianBlur(input(roi), blur, 7);
 
     Mat gray;
     inRange(blur, Scalar(80,80,80), Scalar(255,255,255), gray);
