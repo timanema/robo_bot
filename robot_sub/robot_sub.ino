@@ -19,11 +19,13 @@ int noInput = 0;
 bool stop = true;
 
 void handle(const geometry_msgs::Twist& msg){
+  // Convert from twist to degree
   direction = 180.0 * ((msg.angular.z + 1.0) / 2.0);
   speed = msg.linear.x;
   noInput = 0;
   stop = false;
   
+  // Cap speeds at [-1.0, 1.0]
   if (speed > 1.0) {
     speed = 1.0;
   }
@@ -53,7 +55,7 @@ void setup() {
   nh.subscribe(sub);
 }
 
-void anal(uint8_t pin, int val) {
+void analog(uint8_t pin, int val) {
   switch(digitalPinToTimer(pin)) {
       // Right motor REV
       case TIMER3C:
@@ -87,6 +89,7 @@ void loop() {
 
   nh.spinOnce();
   
+  // Stop after no input has been received for a while
   if (noInput >= 100) {
     stop = true;
   }
@@ -97,6 +100,7 @@ void loop() {
   long duration = pulseIn(PIN_DIST_ECHO, HIGH);
   long distance = (duration / 2) / 29.1;
   
+  // Continue driving if there was a signal and the distance is higher than 5
   if (!stop && (distance > 5)) {
     digitalWrite(PIN_LED, HIGH);
     digitalWrite(PIN_MOTOR1_EN, HIGH);
@@ -105,6 +109,7 @@ void loop() {
     float right = 0;
     float modifier = 1.0;
     
+    // Convert direction to motor power
     if (direction < 0) {
       left = 0;
       right = 0;
@@ -119,6 +124,7 @@ void loop() {
       right = 255;
     }
 
+    // Tandem driving
     if(distance <= 5) {
       modifier = 0.5 + distance / 10;
       
@@ -127,30 +133,32 @@ void loop() {
       }
     }
     
+    // Adjust speed 
     left *= speed;
     right *= speed;
     left *= modifier;
     right *= modifier;
 
+    // Analog write, reverse if speed is lower than 0
     if (speed > 0.0) {
-      anal(PIN_MOTOR1_FWD, int(left));
-      anal(PIN_MOTOR2_FWD, int(right));
-      anal(PIN_MOTOR1_REV, 0);
-      anal(PIN_MOTOR2_REV, 0);
+      analog(PIN_MOTOR1_FWD, int(left));
+      analog(PIN_MOTOR2_FWD, int(right));
+      analog(PIN_MOTOR1_REV, 0);
+      analog(PIN_MOTOR2_REV, 0);
     } else {
-      anal(PIN_MOTOR1_FWD, 0);
-      anal(PIN_MOTOR2_FWD, 0);
-      anal(PIN_MOTOR1_REV, int(right));
-      anal(PIN_MOTOR2_REV, int(left));
+      analog(PIN_MOTOR1_FWD, 0);
+      analog(PIN_MOTOR2_FWD, 0);
+      analog(PIN_MOTOR1_REV, int(right));
+      analog(PIN_MOTOR2_REV, int(left));
     }
-
   } else {
+    // Stop the robot
     digitalWrite(PIN_LED, LOW);
     digitalWrite(PIN_MOTOR1_EN, LOW);
     digitalWrite(PIN_MOTOR2_EN, LOW);
-    anal(PIN_MOTOR1_FWD, 0);
-    anal(PIN_MOTOR2_FWD, 0);
-    anal(PIN_MOTOR1_REV, 0);
-    anal(PIN_MOTOR2_REV, 0);
+    analog(PIN_MOTOR1_FWD, 0);
+    analog(PIN_MOTOR2_FWD, 0);
+    analog(PIN_MOTOR1_REV, 0);
+    analog(PIN_MOTOR2_REV, 0);
   }
 }
